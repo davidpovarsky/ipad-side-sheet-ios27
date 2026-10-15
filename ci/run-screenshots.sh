@@ -92,8 +92,10 @@ capture_device() {
 }
 
 capture_device "$IPAD_UDID" "ipad"
-if [ -n "$IPHONE_UDID" ]; then
+if [ "${INCLUDE_IPHONE:-0}" = "1" ] && [ -n "$IPHONE_UDID" ]; then
     capture_device "$IPHONE_UDID" "iphone"
+else
+    echo "Skipping the ~10-minute extra iPhone simulator boot; only iPad screenshots requested for the fast run."
 fi
 
 # CI default: publish raw, genuine device screenshots immediately. Slow XCTest
@@ -102,11 +104,11 @@ fi
 if [ "${RUN_UI_TESTS:-0}" != "1" ]; then
     echo "Skipping extended XCTest so screenshots can be uploaded immediately."
     cat > screenshots/README.txt <<'EOF'
-Real iPadOS 27 and iOS 27 simulator screenshot captures, not mockups.
+Real iPadOS 27 simulator screenshot captures, not mockups. iPhone is optional.
 ipad/ipad-native-peek.png: actual iPad, small native sheet.
 ipad/ipad-native-half.png: actual iPad, medium native sheet.
 ipad/ipad-native-full.png: actual iPad, large native sheet.
-iphone/: reference of native iPhone sheet adaptation, NOT a resized iPad.
+iphone/: optional reference of native iPhone sheet adaptation, NOT a resized iPad.
 A physically resized iPad window remains unverified until separately tested.
 EOF
     exit 0
@@ -138,7 +140,7 @@ run_ui_tests() {
 }
 status=0
 run_ui_tests "$IPAD_UDID" "ipad" || status=1
-if [ -n "$IPHONE_UDID" ]; then
+if [ "${INCLUDE_IPHONE:-0}" = "1" ] && [ -n "$IPHONE_UDID" ]; then
     run_ui_tests "$IPHONE_UDID" "iphone" || status=1
 fi
 
