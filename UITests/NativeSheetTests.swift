@@ -1,4 +1,5 @@
 import XCTest
+import UIKit
 
 @MainActor
 final class NativeSheetTests: XCTestCase {
@@ -43,4 +44,46 @@ final class NativeSheetTests: XCTestCase {
         XCTAssertTrue(window.exists)
         print("NATIVE_SHEET_TEST_WINDOW_FRAME: \(window.frame)")
     }
+    func testTryRealIPadWindowResize() throws {
+        guard UIDevice.current.userInterfaceIdiom == .pad else {
+            throw XCTSkip("A real iPad window can only be resized on iPadOS.")
+        }
+        let app = XCUIApplication()
+        XCUIDevice.shared.orientation = .landscapeLeft
+        app.launchArguments = ["--detent", "half"]
+        app.launch()
+        XCTAssertTrue(app.staticTexts["Jerusalem"].waitForExistence(timeout: 20))
+
+        let window = app.windows.firstMatch
+        XCTAssertTrue(window.exists)
+        let originalFrame = window.frame
+        capture("05-ipad-before-resize")
+        print("ACTUAL_IPAD_WINDOW_BEFORE: \(originalFrame)")
+
+        // Real system drag from the bottom-right corner, not a simulated
+        // horizontalSizeClass. Requires Windowed Apps mode in the simulator.
+        let bottomRight = XCUIScreen.main.coordinate(
+            withNormalizedOffset: CGVector(dx: 0.982, dy: 0.98)
+        )
+        let inward = XCUIScreen.main.coordinate(
+            withNormalizedOffset: CGVector(dx: 0.59, dy: 0.79)
+        )
+        bottomRight.press(forDuration: 0.5, thenDragTo: inward)
+        sleep(4)
+
+        let resizedFrame = window.frame
+        print("ACTUAL_IPAD_WINDOW_AFTER: \(resizedFrame)")
+        if resizedFrame.width > 0 &&
+            resizedFrame.width < originalFrame.width * 0.80 {
+            capture("06-verified-actual-narrow-ipad-window")
+            XCTAssertTrue(app.staticTexts["Jerusalem"].exists)
+        } else {
+            capture("06-ipad-resize-attempt-not-verified")
+            throw XCTSkip(
+                "System did not resize the actual iPad window in CI; " +
+                "a separate iPhone screenshot must not be represented as proof."
+            )
+        }
+    }
+
 }
