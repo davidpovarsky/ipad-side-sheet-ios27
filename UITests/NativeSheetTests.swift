@@ -62,10 +62,10 @@ final class NativeSheetTests: XCTestCase {
 
         // Real system drag from the bottom-right corner, not a simulated
         // horizontalSizeClass. Requires Windowed Apps mode in the simulator.
-        let bottomRight = XCUIScreen.main.coordinate(
+        let bottomRight = app.coordinate(
             withNormalizedOffset: CGVector(dx: 0.982, dy: 0.98)
         )
-        let inward = XCUIScreen.main.coordinate(
+        let inward = app.coordinate(
             withNormalizedOffset: CGVector(dx: 0.59, dy: 0.79)
         )
         bottomRight.press(forDuration: 0.5, thenDragTo: inward)
